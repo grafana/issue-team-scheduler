@@ -21,7 +21,7 @@ jobs:
       matrix:
         include:
           - dockerfile: ./Dockerfile.ic-assignment
-            image: ${{ github.repository }}
+            image: ${{ github.repository }}-ic-assignment
           - dockerfile: ./Dockerfile.regex-labeler
             image: ${{ github.repository }}-regex-labeler
 
