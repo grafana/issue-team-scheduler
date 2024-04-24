@@ -1,4 +1,4 @@
-name: Publish ic-assignment image
+name: Publish docker images
 
 on:
   push:
