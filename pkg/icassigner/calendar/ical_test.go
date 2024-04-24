@@ -29,7 +29,7 @@ import (
 func TestIsEventBlockingAvailability(t *testing.T) {
 	now := time.Now()
 
-	utc, err := time.LoadLocation("utc")
+	utc, err := time.LoadLocation("UTC")
 	if err != nil {
 		t.Fatal("Error during timezone utc loading:", err)
 	}
@@ -227,7 +227,7 @@ END:VCALENDAR`
 	}))
 	defer ts.Close()
 
-	loc, _ := time.LoadLocation("utc")
+	loc, _ := time.LoadLocation("UTC")
 	now := time.Date(2023, time.December, 07, 16, 0, 0, 0, loc)
 
 	r, err := CheckAvailability(ts.URL, "tester", now)
