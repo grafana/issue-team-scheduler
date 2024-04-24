@@ -22,4 +22,4 @@ inputs:
     default: ""
 runs:
   using: "docker"
-  image: "docker://us.gcr.io/kubernetes-dev/escalation-scheduler-icassigner"
+  image: "docker://ghcr.io/grafana/issue-team-scheduler"
