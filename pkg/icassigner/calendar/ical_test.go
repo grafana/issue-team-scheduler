@@ -22,6 +22,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	_ "time/tzdata"
 )
 
 func TestIsEventBlockingAvailability(t *testing.T) {
