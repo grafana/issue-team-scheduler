@@ -22,14 +22,19 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsEventBlockingAvailability(t *testing.T) {
 	now := time.Now()
 
-	utc, _ := time.LoadLocation("utc")
-	usa, _ := time.LoadLocation("America/New_York")
-	australia, _ := time.LoadLocation("Australia/Melbourne")
+	utc, err := time.LoadLocation("utc")
+	require.NoError(t, err)
+	usa, err := time.LoadLocation("America/New_York")
+	require.NoError(t, err)
+	australia, err := time.LoadLocation("Australia/Melbourne")
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name string
