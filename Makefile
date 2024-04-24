@@ -1,5 +1,5 @@
 COMMIT_SHA := $(shell git rev-parse HEAD | cut -b1-8)
-IMAGE_ICASSIGNER := us.gcr.io/kubernetes-dev/escalation-scheduler-icassigner
+IMAGE_ICASSIGNER := ghcr.io/grafana/issue-team-scheduler
 VERSION := ${VERSION}
 
 cmd/regex-labeler/regex-labeler:
