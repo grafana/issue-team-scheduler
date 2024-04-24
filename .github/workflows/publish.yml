@@ -19,7 +19,7 @@ jobs:
         include:
           - dockerfile: ./Dockerfile.ic-assignment
             image: ${{ github.repository }}-ic-assignment
-          - dockerfile: ./Dockerfile.ic-regex-labeler
+          - dockerfile: ./Dockerfile.regex-labeler
             image: ${{ github.repository }}-regex-labeler
 
     steps:
