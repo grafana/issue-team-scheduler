@@ -22,14 +22,26 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	_ "time/tzdata"
 )
 
 func TestIsEventBlockingAvailability(t *testing.T) {
 	now := time.Now()
 
-	utc, _ := time.LoadLocation("utc")
-	usa, _ := time.LoadLocation("America/New_York")
-	australia, _ := time.LoadLocation("Australia/Melbourne")
+	utc, err := time.LoadLocation("UTC")
+	if err != nil {
+		t.Fatal("Error during timezone utc loading:", err)
+	}
+	usa, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal("Error during timezone usa loading:", err)
+	}
+
+	australia, err := time.LoadLocation("Australia/Melbourne")
+	if err != nil {
+		t.Fatal("Error during timezone melbourne loading:", err)
+	}
 
 	testCases := []struct {
 		name string
@@ -215,7 +227,7 @@ END:VCALENDAR`
 	}))
 	defer ts.Close()
 
-	loc, _ := time.LoadLocation("utc")
+	loc, _ := time.LoadLocation("UTC")
 	now := time.Date(2023, time.December, 07, 16, 0, 0, 0, loc)
 
 	r, err := CheckAvailability(ts.URL, "tester", now)
