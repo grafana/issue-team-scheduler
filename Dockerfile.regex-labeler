@@ -1,0 +1,7 @@
+FROM golang:1.21 AS build
+
+WORKDIR /src
+COPY . /src
+RUN go build -o /regex-labeler /src/cmd/regex-labeler
+
+ENTRYPOINT ["/regex-labeler"]

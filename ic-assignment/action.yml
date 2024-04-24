@@ -1,0 +1,25 @@
+name: "ic-assignment"
+description: "Finds a person to assign a support escalation to and assigns it"
+inputs:
+  gh-token:
+    description: "The GITHUB_TOKEN, needed to update the issue"
+    default: ${{ github.token }}
+  cfg-path:
+    description: "path to cfg yaml file which defines which teams (and their members) exist"
+    required: true
+    default: .auto-assign-issue-cfg.yaml
+  abort-if-already-assigned:
+    description: "Abort the action if somebody is already assigned."
+    required: false
+    default: "true"
+  dry-run:
+    description: "Only log what this action would do, but don't assign the issue in the end."
+    required: false
+    default: "true"
+  gcal_service_acount_key:
+    description: "Used to access google calendars in case of being configured for team members"
+    required: false
+    default: ""
+runs:
+  using: "docker"
+  image: "docker://us.gcr.io/kubernetes-dev/escalation-scheduler-icassigner"

@@ -1,0 +1,144 @@
+package labeler
+
+import (
+	"errors"
+	"slices"
+	"strings"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/google/go-github/github"
+)
+
+type labelAssigner func(repoOwner, repoName string, issueNumber int, labels []string) error
+
+type Labeler struct {
+	cfg           Config
+	labelAssigner labelAssigner
+	logger        log.Logger
+}
+
+func NewLabeler(cfg Config, gh *github.Client, logger log.Logger) *Labeler {
+	return &Labeler{
+		cfg:           cfg,
+		labelAssigner: getLabelAssigner(gh),
+		logger:        logger,
+	}
+}
+
+func (l *Labeler) Run(issue *github.Issue) error {
+	if !l.hasRequiredLabels(issue) {
+		return nil
+	}
+
+	level.Info(l.logger).Log("msg", "issue has the required labels", "required_labels", strings.Join(l.cfg.RequiredLabels, ", "))
+
+	if l.hasAssignableLabel(issue) {
+		return nil
+	}
+
+	level.Info(l.logger).Log("msg", "issue does not have one of the assignable labels", "assignable_labels", strings.Join(l.getAssignableLabels(), ", "))
+
+	label, err := l.findLabel(issue.GetTitle(), issue.GetBody())
+	if err != nil {
+		return err
+	}
+
+	err = l.assignLabel(issue, label)
+	if err != nil {
+		return err
+	}
+
+	level.Info(l.logger).Log("msg", "completed successfully")
+
+	return nil
+}
+
+func (l *Labeler) findLabel(title, body string) (label string, err error) {
+	scoreByLabel := make(map[string]int)
+	for label, properties := range l.cfg.Labels {
+		for _, matcher := range properties.Matchers {
+			if matcher.regex.MatchString(title) || matcher.regex.MatchString(body) {
+				level.Info(l.logger).Log("msg", "regex matches", "regex", matcher.RegexStr)
+				scoreByLabel[label] += matcher.Weight
+			}
+		}
+	}
+
+	var bestLabel string
+	for label, score := range scoreByLabel {
+		level.Info(l.logger).Log("msg", "label has score assigned", "label", label, "score", score)
+		if bestLabel == "" {
+			bestLabel = label
+			continue
+		}
+
+		if score > scoreByLabel[bestLabel] {
+			bestLabel = label
+		}
+	}
+
+	if scoreByLabel[bestLabel] == 0 {
+		return "", errors.New("no label found")
+	}
+
+	level.Info(l.logger).Log("msg", "label has been chosen", "label", bestLabel, "score", scoreByLabel[bestLabel])
+
+	return bestLabel, nil
+}
+
+func (l *Labeler) assignLabel(issue *github.Issue, label string) error {
+	level.Info(l.logger).Log("msg", "assigning label to issue", "label", label)
+
+	issueLabels := getIssueLabels(issue)
+	level.Info(l.logger).Log("msg", "issue currently has labels", "labels", strings.Join(issueLabels, ", "))
+
+	for _, currentLabel := range issueLabels {
+		if currentLabel == label {
+			level.Info(l.logger).Log("msg", "issue already has the label", "label", label)
+			// Label already assigned
+			return nil
+		}
+	}
+
+	issueLabels = append(issueLabels, label)
+
+	level.Info(l.logger).Log("msg", "issue is going to have labels", "labels", strings.Join(issueLabels, ", "))
+
+	repoOwner, repoName := decomposeRepoURL(*issue.RepositoryURL)
+	return l.labelAssigner(repoOwner, repoName, issue.GetNumber(), issueLabels)
+}
+
+func (l *Labeler) getAssignableLabels() []string {
+	assignableLabels := make([]string, 0, len(l.cfg.Labels))
+	for assignableLabel := range l.cfg.Labels {
+		assignableLabels = append(assignableLabels, assignableLabel)
+	}
+	return assignableLabels
+}
+
+func (l *Labeler) hasAssignableLabel(issue *github.Issue) bool {
+	issueLabels := getIssueLabels(issue)
+
+	for _, assignableLabel := range l.getAssignableLabels() {
+		if slices.Contains[[]string, string](issueLabels, assignableLabel) {
+			level.Info(l.logger).Log("msg", "issue already has at least one of the assignable labels, aborting run", "label", assignableLabel)
+			return true
+		}
+	}
+
+	return false
+}
+
+func (l *Labeler) hasRequiredLabels(issue *github.Issue) bool {
+	issueLabels := getIssueLabels(issue)
+
+	for _, requiredLabel := range l.cfg.RequiredLabels {
+		if !slices.Contains[[]string, string](issueLabels, requiredLabel) {
+			level.Info(l.logger).Log("msg", "issue is missing required label", "label", requiredLabel)
+			return false
+		}
+	}
+
+	return true
+}
