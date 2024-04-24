@@ -29,9 +29,19 @@ import (
 func TestIsEventBlockingAvailability(t *testing.T) {
 	now := time.Now()
 
-	utc, _ := time.LoadLocation("utc")
-	usa, _ := time.LoadLocation("America/New_York")
-	australia, _ := time.LoadLocation("Australia/Melbourne")
+	utc, err := time.LoadLocation("utc")
+	if err != nil {
+		t.Fatal("Error during timezone utc loading:", err)
+	}
+	usa, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal("Error during timezone usa loading:", err)
+	}
+
+	australia, err := time.LoadLocation("Australia/Melbourne")
+	if err != nil {
+		t.Fatal("Error during timezone melbourne loading:", err)
+	}
 
 	testCases := []struct {
 		name string
