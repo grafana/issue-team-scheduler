@@ -66,7 +66,7 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		}
 	}
 
-	// Log the team member names to consider.
+	// Log the known team member names.
 	log.Printf("Known team members: %q", strings.Join(memberNames(teamMembers), ", "))
 
 	// 1. get busyness scores per team member
@@ -76,7 +76,7 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		return fmt.Errorf("unable to calculate team busyness, due %w", err)
 	}
 
-	// Log the business report.
+	// Log the busyness report.
 	log.Printf("Team members by busyness: %q", busynessPerTeamMember.String())
 
 	// 2. Iterate over team members by increasing busyness and check their availability
@@ -120,7 +120,7 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		availableMembers = teamMembers
 	}
 
-	// Log available team members.
+	// Log the available team members.
 	log.Printf("Available team members: %q", strings.Join(memberNames(availableMembers), ", "))
 
 	// choose a member
