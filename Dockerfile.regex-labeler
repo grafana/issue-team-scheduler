@@ -1,4 +1,7 @@
-FROM golang:1.22 AS build
+FROM golang:1.22-alpine AS build
+
+RUN apk --no-cache add --no-check-certificate ca-certificates \
+    && update-ca-certificates
 
 WORKDIR /src
 COPY . /src
@@ -6,4 +9,6 @@ RUN CGO_ENABLED=0 go build -o /regex-labeler /src/cmd/regex-labeler
 
 FROM scratch
 COPY --from=build /regex-labeler /regex-labeler
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 ENTRYPOINT ["/regex-labeler"]
