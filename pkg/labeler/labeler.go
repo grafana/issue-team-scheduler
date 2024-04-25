@@ -71,12 +71,18 @@ func (l *Labeler) Run(issue *github.Issue) error {
 }
 
 func (l *Labeler) findLabel(title, body string) (label string, err error) {
+	// Don't log title / body because they might contain sensitive data.
+
 	scoreByLabel := make(map[string]int)
 	for label, properties := range l.cfg.Labels {
+		level.Info(l.logger).Log("msg", "evaluating regular expressions for label", "label", label)
+
 		for _, matcher := range properties.Matchers {
 			if matcher.regex.MatchString(title) || matcher.regex.MatchString(body) {
 				level.Info(l.logger).Log("msg", "regex matches", "regex", matcher.RegexStr)
 				scoreByLabel[label] += matcher.Weight
+			} else {
+				level.Info(l.logger).Log("msg", "regex does not match", "regex", matcher.RegexStr)
 			}
 		}
 	}
