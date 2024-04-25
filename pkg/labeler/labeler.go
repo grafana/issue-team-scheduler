@@ -79,7 +79,7 @@ func (l *Labeler) findLabel(title, body string) (label string, err error) {
 
 		for _, matcher := range properties.Matchers {
 			if matcher.regex.MatchString(title) || matcher.regex.MatchString(body) {
-				level.Info(l.logger).Log("msg", "regex matches", "regex", matcher.RegexStr)
+				level.Info(l.logger).Log("msg", "regex matches", "regex", matcher.RegexStr, "weight", matcher.Weight)
 				scoreByLabel[label] += matcher.Weight
 			} else {
 				level.Info(l.logger).Log("msg", "regex does not match", "regex", matcher.RegexStr)
