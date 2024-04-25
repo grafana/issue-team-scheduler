@@ -174,7 +174,7 @@ func checkAvailability(m MemberConfig) (bool, error) {
 }
 
 func GetGoogleConfig() (calendar.GoogleConfigJSON, error) {
-	clientSecret := githubaction.GetInputOrDefault("gcal_service_acount_key", "")
+	clientSecret := githubaction.GetInputOrDefault("gcal-service-acount-key", "")
 
 	if clientSecret == "" {
 		return "", errors.New("can't fetch gcal availability due gcal_service_acount_key input not set")
