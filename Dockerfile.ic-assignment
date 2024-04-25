@@ -2,7 +2,7 @@ FROM golang:1.22 AS build
 
 WORKDIR /src
 COPY . /src
-RUN go build -o /ic-assignment /src/cmd/ic-assignment
+RUN CGO_ENABLED=0 go build -o /ic-assignment /src/cmd/ic-assignment
 
 FROM scratch
 COPY --from=build /ic-assignment /ic-assignment
