@@ -4,4 +4,6 @@ WORKDIR /src
 COPY . /src
 RUN go build -o /regex-labeler /src/cmd/regex-labeler
 
+FROM scratch
+COPY --from=build /regex-labeler /regex-labeler
 ENTRYPOINT ["/regex-labeler"]
