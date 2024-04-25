@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -28,6 +29,17 @@ import (
 
 // Report represents the busyness of a team in ascending order of busyness
 type Report []Level
+
+func (r Report) String() string {
+	var s string
+	for idx, l := range r {
+		if idx > 0 {
+			s += "; "
+		}
+		s += fmt.Sprintf("%d: %s\n", l.Busyness, strings.Join(l.Users, ","))
+	}
+	return s
+}
 
 // Level represents one level of busyness and all team members which match the given busyness
 type Level struct {

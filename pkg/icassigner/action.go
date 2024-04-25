@@ -66,12 +66,18 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		}
 	}
 
+	// Log the known team member names.
+	log.Printf("Known team members: %q", strings.Join(memberNames(teamMembers), ", "))
+
 	// 1. get busyness scores per team member
 	// We calculate busyness first as this is usually cheaper than availability checks
 	busynessPerTeamMember, err := a.calculateIssueBusynessPerTeamMember(ctx, time.Now(), teamMembers)
 	if err != nil {
 		return fmt.Errorf("unable to calculate team busyness, due %w", err)
 	}
+
+	// Log the busyness report.
+	log.Printf("Team members by busyness: %q", busynessPerTeamMember.String())
 
 	// 2. Iterate over team members by increasing busyness and check their availability
 	var availableMembers []MemberConfig
@@ -97,6 +103,8 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 
 			if isAvailable {
 				availableMembers = append(availableMembers, member)
+			} else {
+				log.Printf("Member %q is not available based on calendar", name)
 			}
 		}
 
@@ -111,6 +119,9 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		log.Printf("Nobody seems to be available, hence we consider everybody to be available!")
 		availableMembers = teamMembers
 	}
+
+	// Log the available team members.
+	log.Printf("Available team members: %q", strings.Join(memberNames(availableMembers), ", "))
 
 	// choose a member
 	theChosenOne := availableMembers[rand.Intn(len(availableMembers))]
@@ -132,6 +143,13 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 	_, _, err = a.Client.Issues.AddAssignees(ctx, *event.Issue.Repository.Owner.Name, *event.Issue.Repository.Name, *event.Issue.Number, []string{theChosenOne.Name})
 
 	return err
+}
+
+func memberNames(members []MemberConfig) (result []string) {
+	for _, m := range members {
+		result = append(result, m.Name)
+	}
+	return result
 }
 
 func (a *Action) calculateIssueBusynessPerTeamMember(ctx context.Context, now time.Time, members []MemberConfig) (busyness.Report, error) {
