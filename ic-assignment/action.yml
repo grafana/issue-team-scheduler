@@ -1,25 +1,24 @@
 name: "ic-assignment"
-description: "Finds a person to assign a support escalation to and assigns it"
+description: "Finds a person who is available (based on their calendar) and is least busy (based on assigned issues) and assigns an incoming issue to that person"
 inputs:
   gh-token:
-    description: "The GITHUB_TOKEN, needed to update the issue"
+    description: "The GITHUB_TOKEN, which is used to check busyness of team members (therefore requires read access) and assigns the issue (requires write access)"
     default: ${{ github.token }}
   cfg-path:
-    description: "path to cfg yaml file which defines which teams (and their members) exist"
+    description: "path to cfg yml file which defines which teams (and their members) exist"
     required: true
-    default: .auto-assign-issue-cfg.yaml
-  abort-if-already-assigned:
-    description: "Abort the action if somebody is already assigned."
-    required: false
-    default: "true"
+    default: .auto-ic-assignment-cfg.yml
   dry-run:
-    description: "Only log what this action would do, but don't assign the issue in the end."
+    description: "With this option the decision only gets logged, but not change is made to the issue."
     required: false
     default: "true"
-  gcal_service_acount_key:
+  gcal-service-acount-key:
     description: "Used to access google calendars in case of being configured for team members"
     required: false
     default: ""
+outputs:
+  assignee:
+    description: 'The output property of the assigned person. If output property is empty, name is used instead'
 runs:
   using: "docker"
   image: "docker://ghcr.io/grafana/issue-team-scheduler-ic-assignment:v0.5"
