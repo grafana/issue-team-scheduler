@@ -20,16 +20,16 @@ An exemplary configuration looks like this:
 ```yaml
 required_labels:
 labels:
-  regex-labeler:
+  potential-bug:
     matchers:
-      - regex: "regex"
-  ic-assignment:
+      - regex: "(bug|not working)"
+  performance-degradation:
     matchers:
-      - regex: "assignment"
+      - regex: "(slower|increased.*consumption)"
         weight: 10
 ```
 
-In this example the action would apply to all new issues (as no `required_labels` are set). If the issue title and/or body contains the word "regex" it would be labeled as `regex-labeler` by default. But if the word `assignment` is matched, the label `ic-assignment` would be assigned instead (given the higher weight).
+In this example the action would apply to all new issues (as no `required_labels` are set). If the issue title and/or body contains the words "bug" or "not working" it would be labeled as `potential-bug` by default. But if the words `slower` or a combination of `increased` and `consumption` is matched, the label `performance-degradation` would be assigned instead (given the higher weight).
 
 #### Configuration structs
 
