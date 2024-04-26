@@ -44,7 +44,7 @@ Matcher configuration:
 
 | Parameter  | Type            | Required | Default | Description                                                                                                                                                                                             |
 | ---------- | --------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `matchers` | List of Matcher | false    | `[]`    | List matchers which are required to assign this label. Each matching matchers increases the likeliness (by weight) the owning label is assigned. At least one matcher needs to match to assign a label. |
+| `matchers` | List of Matcher | false    | `[]`    | List matchers which are required to assign this label. Each matching matcher increases the likeliness (by weight) the owning label is assigned. At least one matcher needs to match to assign a label. |
 
 Matcher:
 
@@ -123,7 +123,7 @@ ignoreLabels:
 
 | Parameter      | Type                       | Required | Default | Description                                                                                                                                                          |
 | -------------- | -------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ignoreLabels` | List of Strings            | false    | `[]`    | List of labels which mark this issue to be ignored. If triggered on an issue which has **one** of the labels to be ignored, the action exits without doing something |
+| `ignoreLabels` | List of Strings            | false    | `[]`    | List of labels which mark this issue to be ignored. If triggered on an issue which has at least **one** of the labels to be ignored, the action exits without doing something |
 | `teams`        | Map of Team configurations | true     | `nil`   | Definition of the teams this issue is distributed between.                                                                                                           |
 
 #### Team configuration struct
@@ -151,7 +151,7 @@ During the initial implementation it was carefully discussed if the action shoul
 
 #### Fairness
 
-Fairness in assigning issues to individuals of a team is subjective. As mean time to resolve depends on time of creation, issue complexity, productivity, knowledge, experience, availability and some degree of luck per team member it needs to be acknowledged that their is no objectional fair distribution of issues among a group of people. Taking all these metrics into account is almost impossible and most likely would require additional state which we would need to store somewhere. We also discussed ideas like the tracking the amount of completed issues per IC, but had to realise that issues which were hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now. 
+Fairness in assigning issues to individuals of a team is subjective. As mean time to resolve depends on time of creation, issue complexity, productivity, knowledge, experience, availability and some degree of luck per team member it needs to be acknowledged that their is no objective fair distribution of issues among a group of people. Taking all these metrics into account is almost impossible and most likely would require additional state which we would need to store somewhere. We also discussed ideas like tracking the amount of completed issues per IC, but had to realise that issues which were hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now. 
 
 ### Google calendar configuration
 

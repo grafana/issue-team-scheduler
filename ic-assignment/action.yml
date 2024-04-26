@@ -9,7 +9,7 @@ inputs:
     required: true
     default: .auto-ic-assignment-cfg.yml
   dry-run:
-    description: "With this option set only logs, but doesn't assign the issue in the end."
+    description: "With this option the decision only gets logged, but not change is made to the issue."
     required: false
     default: "true"
   gcal-service-acount-key:
