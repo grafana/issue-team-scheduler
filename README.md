@@ -147,10 +147,11 @@ ignoreLabels:
 
 #### Timezone awareness
 
-* Not timezone aware - The intent is to distribute issues fairly between everybody, therefore we made the decision to not respect timezones. If you are interested in fixing this please open an issue and explain your usecase there. 
+During the initial implementation it was carefully discussed if the action should take timzeones into consideration (aka only assign issues to someone during their working hours). After in-depth analysis of issues in other projects we concluded that the creation time of issues don't align to working hours of the majority of the teams we were working in (e.g. majority of issues created during american working hours while majority of the team wasn't located there). **This led us to make the action not timezone aware as of today.** As this obviously cause issues when you need issues to handle in a timely manner we are open to proposals for improvement, if they take into account that our main priority is to distribute issues as fairly as possible across a team. 
 
 #### Fairness
-* Not completely fair - Some team members might resolve issues quicker than others and will potentially end up with more issues in the long run. Adding state to a github action to track the amount of completed issues is hard and people who get issues which are very hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now. 
+
+Fairness in assigning issues to individuals of a team is subjective. As mean time to resolve depends on time of creation, issue complexity, productivity, knowledge, experience, availability and some degree of luck per team member it needs to be acknowledged that their is no objectional fair distribution of issues among a group of people. Taking all these metrics into account is almost impossible and most likely would require additional state which we would need to store somewhere. We also discussed ideas like the tracking the amount of completed issues per IC, but had to realise that issues which were hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now. 
 
 ### Google calendar configuration
 
