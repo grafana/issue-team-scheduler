@@ -89,8 +89,7 @@ func parseStartEnd(e ical.Event, loc *time.Location) (time.Time, time.Time, erro
 }
 
 func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Location, unavailabilityLimit time.Duration) (bool, error) {
-
-	icalAvailabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, loc)
+	availabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, loc)
 
 	for _, event := range events {
 		if prop := event.Props.Get(ical.PropTransparency); prop != nil && prop.Value == "TRANSPARENT" {
@@ -104,7 +103,7 @@ func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Loca
 		}
 
 		// check original occurence
-		if icalAvailabilityChecker.isEventBlockingAvailability(start, end) {
+		if availabilityChecker.isEventBlockingAvailability(start, end) {
 			log.Printf("calendar.isAvailableOn: person %q in %q is unavailable due to event from %q to %q\n", name, loc.String(), start, end)
 			return false, nil
 		}
@@ -124,7 +123,7 @@ func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Loca
 			start := o
 			end := o.Add(completeDuration)
 
-			if icalAvailabilityChecker.isEventBlockingAvailability(start, end) {
+			if availabilityChecker.isEventBlockingAvailability(start, end) {
 				log.Printf(`calendar.isAvailableOn: person %q is unavailable due to event from %q to %q`, name, start, end)
 				return false, nil
 			}

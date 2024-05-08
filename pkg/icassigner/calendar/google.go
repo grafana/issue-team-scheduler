@@ -54,7 +54,7 @@ func CheckGoogleAvailability(cfg GoogleConfigJSON, calendarName string, name str
 		return true, fmt.Errorf("unable to access calendar from %v, please ensure they shared their calendar with the service account. Internal error %q", name, calendar.Errors[0].Reason)
 	}
 
-	icalAvailabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, time.UTC)
+	availabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, time.UTC)
 
 	// check all events
 	for _, e := range calendar.Busy {
@@ -68,7 +68,7 @@ func CheckGoogleAvailability(cfg GoogleConfigJSON, calendarName string, name str
 			continue
 		}
 
-		if icalAvailabilityChecker.isEventBlockingAvailability(start, end) {
+		if availabilityChecker.isEventBlockingAvailability(start, end) {
 			return false, nil
 		}
 	}
