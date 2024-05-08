@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/grafana/escalation-scheduler/pkg/icassigner/calendar"
 	"gopkg.in/yaml.v2"
 )
 
@@ -55,7 +56,7 @@ func ParseConfig(r io.Reader) (Config, error) {
 
 	if cfg.UnavailabilityLimit == 0 {
 		// If unset, set default value
-		cfg.UnavailabilityLimit = 6 * time.Hour
+		cfg.UnavailabilityLimit = calendar.DefaultUnavailabilityLimit
 	}
 
 	return cfg, nil

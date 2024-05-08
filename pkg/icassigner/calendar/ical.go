@@ -25,6 +25,8 @@ import (
 	"github.com/emersion/go-ical"
 )
 
+const DefaultUnavailabilityLimit = 6 * time.Hour
+
 type icalAvailabilityChecker struct {
 	now                 time.Time
 	unavailabilityLimit time.Duration

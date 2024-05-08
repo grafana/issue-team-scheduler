@@ -231,7 +231,7 @@ END:VCALENDAR`
 	loc, _ := time.LoadLocation("UTC")
 	now := time.Date(2023, time.December, 07, 16, 0, 0, 0, loc)
 
-	r, err := CheckAvailability(ts.URL, "tester", now, 6*time.Hour)
+	r, err := CheckAvailability(ts.URL, "tester", now, DefaultUnavailabilityLimit)
 
 	if err != nil {
 		t.Errorf("No error expected during basic ical check, but got %v", err)
