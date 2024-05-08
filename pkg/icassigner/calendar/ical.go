@@ -25,16 +25,30 @@ import (
 	"github.com/emersion/go-ical"
 )
 
-const UnavailabilityLimit = 6 * time.Hour // 6hr
+const DefaultUnavailabilityLimit = 6 * time.Hour
 
-func isEventBlockingAvailability(now time.Time, start, end time.Time, loc *time.Location) bool {
+type icalAvailabilityChecker struct {
+	now                 time.Time
+	unavailabilityLimit time.Duration
+	location            *time.Location
+}
+
+func newIcalAvailabilityChecker(now time.Time, unavailabilityLimit time.Duration, location *time.Location) icalAvailabilityChecker {
+	return icalAvailabilityChecker{
+		now:                 now,
+		unavailabilityLimit: unavailabilityLimit,
+		location:            location,
+	}
+}
+
+func (i *icalAvailabilityChecker) isEventBlockingAvailability(start, end time.Time) bool {
 	// if event is shorter than unavailabilityLimit, skip it
-	if end.Sub(start) < UnavailabilityLimit {
+	if end.Sub(start) < i.unavailabilityLimit {
 		return false
 	}
 
 	// if the end of this date is already before the current date, skip it
-	if end.Before(now) {
+	if end.Before(i.now) {
 		return false
 	}
 
@@ -44,7 +58,7 @@ func isEventBlockingAvailability(now time.Time, start, end time.Time, loc *time.
 	//
 	// Now we need to check if that event starts in the next 12 business hours
 	lookAheadTime := 12 * time.Hour
-	localDate := now.In(loc)
+	localDate := i.now.In(i.location)
 
 	switch localDate.Weekday() {
 	case time.Friday:
@@ -76,7 +90,9 @@ func parseStartEnd(e ical.Event, loc *time.Location) (time.Time, time.Time, erro
 	return start, end, nil
 }
 
-func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Location) (bool, error) {
+func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Location, unavailabilityLimit time.Duration) (bool, error) {
+	availabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, loc)
+
 	for _, event := range events {
 		if prop := event.Props.Get(ical.PropTransparency); prop != nil && prop.Value == "TRANSPARENT" {
 			continue
@@ -89,7 +105,7 @@ func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Loca
 		}
 
 		// check original occurence
-		if isEventBlockingAvailability(now, start, end, loc) {
+		if availabilityChecker.isEventBlockingAvailability(start, end) {
 			log.Printf("calendar.isAvailableOn: person %q in %q is unavailable due to event from %q to %q\n", name, loc.String(), start, end)
 			return false, nil
 		}
@@ -109,7 +125,7 @@ func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Loca
 			start := o
 			end := o.Add(completeDuration)
 
-			if isEventBlockingAvailability(now, start, end, loc) {
+			if availabilityChecker.isEventBlockingAvailability(start, end) {
 				log.Printf(`calendar.isAvailableOn: person %q is unavailable due to event from %q to %q`, name, start, end)
 				return false, nil
 			}
@@ -119,7 +135,7 @@ func checkEvents(events []ical.Event, name string, now time.Time, loc *time.Loca
 	return true, nil
 }
 
-func CheckAvailability(icalUrl string, name string, now time.Time) (bool, error) {
+func CheckAvailability(icalUrl string, name string, now time.Time, unavailabilityLimit time.Duration) (bool, error) {
 	resp, err := http.Get(icalUrl)
 	if err != nil {
 		return true, fmt.Errorf("unable to download ical file, due %w", err)
@@ -143,5 +159,5 @@ func CheckAvailability(icalUrl string, name string, now time.Time) (bool, error)
 		}
 	}
 
-	return checkEvents(cal.Events(), name, now, loc)
+	return checkEvents(cal.Events(), name, now, loc, unavailabilityLimit)
 }

@@ -96,7 +96,7 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 				continue
 			}
 
-			isAvailable, err := checkAvailability(member)
+			isAvailable, err := checkAvailability(member, a.Config.UnavailabilityLimit)
 			if err != nil {
 				log.Printf("Unable to fetch availability of %q, due %v", name, err)
 			}
@@ -161,16 +161,16 @@ func (a *Action) calculateIssueBusynessPerTeamMember(ctx context.Context, now ti
 	return busyness.CalculateBusynessForTeam(ctx, now, a.Client, a.Config.IgnoredLabels, team)
 }
 
-func checkAvailability(m MemberConfig) (bool, error) {
+func checkAvailability(m MemberConfig, unavailabilityLimit time.Duration) (bool, error) {
 	if m.GoogleCalendar != "" {
 		cfg, err := GetGoogleConfig()
 		if err != nil {
 			return true, err
 		}
-		return calendar.CheckGoogleAvailability(cfg, m.GoogleCalendar, m.Name, time.Now())
+		return calendar.CheckGoogleAvailability(cfg, m.GoogleCalendar, m.Name, time.Now(), unavailabilityLimit)
 	}
 
-	return calendar.CheckAvailability(m.IcalURL, m.Name, time.Now())
+	return calendar.CheckAvailability(m.IcalURL, m.Name, time.Now(), unavailabilityLimit)
 }
 
 func GetGoogleConfig() (calendar.GoogleConfigJSON, error) {

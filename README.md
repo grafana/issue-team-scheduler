@@ -117,6 +117,7 @@ teams:
       output: "slack-handle"
 ignoreLabels:
   - stale
+unavailabilityLimit: 6h
 ```
 
 #### Root configuration struct
@@ -125,6 +126,7 @@ ignoreLabels:
 | -------------- | -------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ignoreLabels` | List of Strings            | false    | `[]`    | List of labels which mark this issue to be ignored. If triggered on an issue which has at least **one** of the labels to be ignored, the action exits without doing something |
 | `teams`        | Map of Team configurations | true     | `nil`   | Definition of the teams this issue is distributed between.                                                                                                           |
+| `unavailabilityLimit` | Duration | false | `6h` | Duration for which a calendar event must block someone's availability for them to be considered unavailable. |
 
 #### Team configuration struct
 

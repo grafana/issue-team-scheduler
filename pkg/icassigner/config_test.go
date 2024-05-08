@@ -19,6 +19,7 @@ package icassigner
 import (
 	"bytes"
 	"testing"
+	"time"
 )
 
 func TestMimirConfigCanBeParsed(t *testing.T) {
@@ -38,7 +39,8 @@ func TestMimirConfigCanBeParsed(t *testing.T) {
       ical-url: https://tester2/basic.ics
       output: slack2
 ignoreLabels:
-- stale` // redacted excerpt from a real world config
+- stale
+unavailabilityLimit: 6h` // redacted excerpt from a real world config
 
 	r := bytes.NewBuffer([]byte(rawConfig))
 
@@ -55,6 +57,10 @@ ignoreLabels:
 	team, ok := cfg.Teams["mimir"]
 	if !ok {
 		t.Fatal("Expected to find team \"mimir\", but got none")
+	}
+
+	if cfg.UnavailabilityLimit != 6*time.Hour {
+		t.Error("Expected unavailability limit to be 6h, but got", cfg.UnavailabilityLimit)
 	}
 
 	expectedRequiredLabels := []string{"cloud-prometheus", "enterprise-metrics"}

@@ -191,7 +191,8 @@ func TestIsEventBlockingAvailability(t *testing.T) {
 
 	for _, testcase := range testCases {
 		t.Run(testcase.name, func(t *testing.T) {
-			res := isEventBlockingAvailability(testcase.now, testcase.start, testcase.end, testcase.location)
+			availabilityChecker := newIcalAvailabilityChecker(testcase.now, 6*time.Hour, testcase.location)
+			res := availabilityChecker.isEventBlockingAvailability(testcase.start, testcase.end)
 			if res != testcase.expectedResult {
 				t.Errorf("Expected isEventBlockingAvailability to be %v, but got %v for event between %q and %q (tz=%v)", testcase.expectedResult, res, testcase.start, testcase.end, testcase.location.String())
 			}
@@ -230,7 +231,7 @@ END:VCALENDAR`
 	loc, _ := time.LoadLocation("UTC")
 	now := time.Date(2023, time.December, 07, 16, 0, 0, 0, loc)
 
-	r, err := CheckAvailability(ts.URL, "tester", now)
+	r, err := CheckAvailability(ts.URL, "tester", now, DefaultUnavailabilityLimit)
 
 	if err != nil {
 		t.Errorf("No error expected during basic ical check, but got %v", err)
