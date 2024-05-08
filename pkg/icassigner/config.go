@@ -21,14 +21,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/google/go-github/github"
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Teams         map[string]TeamConfig `yaml:"teams,omitempty"`
-	IgnoredLabels []string              `yaml:"ignoreLabels,omitempty"`
+	UnavailabilityLimit time.Duration         `yaml:"unavailabilityLimit,omitempty"`
+	Teams               map[string]TeamConfig `yaml:"teams,omitempty"`
+	IgnoredLabels       []string              `yaml:"ignoreLabels,omitempty"`
 }
 
 type TeamConfig struct {
@@ -49,6 +51,11 @@ func ParseConfig(r io.Reader) (Config, error) {
 	err := yaml.NewDecoder(r).Decode(&cfg)
 	if err != nil {
 		return cfg, fmt.Errorf("unable to parse config, due: %w", err)
+	}
+
+	if cfg.UnavailabilityLimit == 0 {
+		// If unset, set default value
+		cfg.UnavailabilityLimit = 6 * time.Hour
 	}
 
 	return cfg, nil
