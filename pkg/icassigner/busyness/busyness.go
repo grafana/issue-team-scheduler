@@ -63,12 +63,7 @@ func CalculateBusynessForTeam(ctx context.Context, now time.Time, githubClient *
 }
 
 func calculateBusynessForTeam(ctx context.Context, now time.Time, bA busynessClient, members []string) Report {
-	// calculate lookback time. If we are on a time shortly after the weekend we'll extend to lookback by 2 days to account for weekends
-	// TODO: Should this be configurable?
-	since := now.Add(-5 * 24 * time.Hour)
-	if since.Weekday() == time.Saturday || since.Weekday() == time.Sunday {
-		since = since.Add(-2 * 24 * time.Hour)
-	}
+	since := now.Add(-7 * 24 * time.Hour)
 
 	addMember := func(b map[int][]string, m string, busyness int) {
 		v, ok := b[busyness]

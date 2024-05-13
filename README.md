@@ -69,9 +69,9 @@ Calendars are accessed either via a public ical feed or via google calendar api 
 
 #### Determine busyness of individual members of a team
 
-Busyness of team members is calculated by the amount of issues someone is assigned to and which got updated in the past 5 days (not configurable at the moment). Issues updated in this timeframe are taken into account if
+Busyness of team members is calculated by the amount of issues someone is assigned to and which got updated in the past 7 days (not configurable at the moment). Issues updated in this timeframe are taken into account if
 * Open issues: If they don't contain any of the labels which are configured to be ignored. This allows for example to ignore issues which got marked as `stale`
-* Closed issues: If they were closed within the lookback time (5 days).
+* Closed issues: If they were closed within the lookback time (7 days).
 
 The higher this count, the more busy an individual team member is seen compared to other members.  
 
