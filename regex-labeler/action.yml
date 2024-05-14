@@ -9,4 +9,4 @@ inputs:
     description: "GitHub token to use for API calls"
 runs:
   using: "docker"
-  image: "docker://ghcr.io/grafana/issue-team-scheduler-regex-labeler:v0.8"
+  image: "docker://ghcr.io/grafana/issue-team-scheduler-regex-labeler:v0.9"
