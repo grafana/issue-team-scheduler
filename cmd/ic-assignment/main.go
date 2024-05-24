@@ -62,6 +62,14 @@ func main() {
 		log.Fatalf("Unable to parse config: %v", err)
 	}
 
+	if actionCtx.Issue == nil {
+		log.Fatalf("Unable to run without an issue set")
+	}
+
+	if actionCtx.Issue.Number == nil {
+		log.Fatalf("No issue number is set")
+	}
+
 	dryRun := githubaction.GetInputOrDefault("dry-run", "true") != "false"
 
 	action := &icassigner.Action{
