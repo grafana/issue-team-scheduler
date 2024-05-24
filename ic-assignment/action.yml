@@ -21,4 +21,4 @@ outputs:
     description: "The output property of the assigned person. If output property is empty, name is used instead"
 runs:
   using: "docker"
-  image: "docker://ghcr.io/grafana/issue-team-scheduler-ic-assignment:v0.10"
+  image: "docker://ghcr.io/grafana/issue-team-scheduler-ic-assignment:v0.11"
