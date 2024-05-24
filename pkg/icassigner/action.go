@@ -140,15 +140,15 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 		return nil
 	}
 
-	if event.Issue.Repository == nil || event.Issue.Repository.Name == nil {
-		log.Fatalf("Can't set any assignee as the repository or its name is missing, payload: %+v", event.Issue.Repository)
+	if event.Repo == nil || event.Repo.Name == nil {
+		log.Fatalf("Can't set any assignee as the repository or its name is missing, payload: %+v", event.Repo)
 	}
 
-	if event.Issue.Repository.Owner == nil || event.Issue.Repository.Owner.Login == nil {
-		log.Fatalf("Can't set any assignee as the repository owner or its login name is missing, payload: %+v", event.Issue.Repository.Owner)
+	if event.Repo.Owner == nil || event.Repo.Owner.Login == nil {
+		log.Fatalf("Can't set any assignee as the repository owner or its login name is missing, payload: %+v", event.Repo.Owner)
 	}
 
-	_, _, err = a.Client.Issues.AddAssignees(ctx, *event.Issue.Repository.Owner.Login, *event.Issue.Repository.Name, *event.Issue.Number, []string{theChosenOne.Name})
+	_, _, err = a.Client.Issues.AddAssignees(ctx, *event.Repo.Owner.Login, *event.Repo.Name, *event.Issue.Number, []string{theChosenOne.Name})
 
 	return err
 }
