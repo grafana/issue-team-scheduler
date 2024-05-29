@@ -59,7 +59,7 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, dryRun bool
 	// check if someone from the team is already assigned (skip in this case)
 	for _, m := range teamMembers {
 		for _, a := range event.Issue.Assignees {
-			if a.GetName() == m.Name {
+			if a.GetLogin() == m.Name {
 				log.Printf("Found assignee %q which is member of the matched team %q. Stopping\n", m.Name, teamName)
 				return nil
 			}
