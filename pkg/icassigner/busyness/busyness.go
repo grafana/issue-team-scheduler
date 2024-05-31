@@ -163,7 +163,7 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 			}
 
 			// increase busyness count otherwise
-			log.Printf("Issue increases busyiness because it is still open: %s\n", i.GetTitle())
+			log.Printf("%s: Issue increases busyiness because it is still open: %s\n", member, i.GetTitle())
 			busyness++
 		case "closed":
 			// if the issue got closed since our time to check
