@@ -168,7 +168,7 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 		case "closed":
 			// if the issue got closed since our time to check
 			if since.Before(i.GetClosedAt()) {
-				log.Printf("%s: Issue increases busyiness because it has been closed at %s which is after %s: %s\n", member, i.GetClosedAt().String(), since.String(), i.GetTitle())
+				log.Printf("%s: Issue increases busyness because it has been closed at %s which is after %s: %s\n", member, i.GetClosedAt().String(), since.String(), i.GetTitle())
 				busyness++
 			} else {
 				log.Printf("%s: Issue doesn't increase busyiness because it has been closed at %s which is before %s: %s\n", member, i.GetClosedAt().String(), since.String(), i.GetTitle())
