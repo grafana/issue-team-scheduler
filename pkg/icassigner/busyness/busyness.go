@@ -19,6 +19,7 @@ package busyness
 import (
 	"context"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 	"time"
@@ -55,6 +56,8 @@ type busynessClient interface {
 
 // CalculateBusynessForTeam calculates busyness of all members and returns a BusynessReport for them
 func CalculateBusynessForTeam(ctx context.Context, now time.Time, githubClient *github.Client, ignorableLabels []string, members []string) (Report, error) {
+	log.Printf("Calculating issue busyness for team members: %s\n", strings.Join(members, ", "))
+
 	bA, err := newGithubBusynessClient(githubClient, ignorableLabels)
 	if err != nil {
 		return Report{}, fmt.Errorf("unable to create github busyness client, due %w", err)
@@ -140,15 +143,8 @@ func newGithubBusynessClient(githubClient *github.Client, ignorableLabels []stri
 // If there are labels to be ignored, all issues with that label are ignored from the busyness calculation
 func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time, member string) int {
 	// check if one of the labels is contained by the labels to ignore
-	containsLabelsToIgnore := func(labels []github.Label) bool {
-		for _, l := range labels {
-			_, tobeIgnored := b.labelsToIgnore[*l.Name]
-			if tobeIgnored {
-				return true
-			}
-		}
-		return false
-	}
+
+	log.Printf("Listing issues of member %s since %s\n", member, since.String())
 
 	issues, err := b.listByAssigneeFunc(ctx, since, member, 20)
 	if err != nil {
@@ -158,27 +154,47 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 	// count relevant issues
 	busyness := 0
 	for _, i := range issues {
-		// ignore everything without any state
-		if i.State == nil {
-			continue
-		}
-
-		switch *i.State {
+		switch i.GetState() {
 		case "open":
 			// check for labels to ignore, e.g. `stale` and ignore issue in this case
-			if containsLabelsToIgnore(i.Labels) {
+			if b.containsLabelsToIgnore(i.Labels) {
+				log.Printf("Ignoring open issue because it contains labels to ignore (%s): %s\n", labelsToString(i.Labels), i.GetTitle())
 				continue
 			}
 
 			// increase busyness count otherwise
+			log.Printf("Issue increases busyiness because it is still open: %s\n", i.GetTitle())
 			busyness++
 		case "closed":
 			// if the issue got closed since our time to check
-			if since.Before(*i.ClosedAt) {
+			if since.Before(i.GetClosedAt()) {
+				log.Printf("Issue increases busyiness because it has been closed at %s which is after %s: %s\n", i.GetClosedAt().String(), since.String(), i.GetTitle())
 				busyness++
+			} else {
+				log.Printf("Issue doesn't increase busyiness because it has been closed at %s which is before %s: %s\n", i.GetClosedAt().String(), since.String(), i.GetTitle())
 			}
+		default:
+			log.Printf("Issue doesn't increase busyiness because it has an unknown state (%s): %s\n", i.GetState(), i.GetTitle())
 		}
 	}
 
 	return busyness
+}
+
+func (b *githubBusynessClient) containsLabelsToIgnore(labels []github.Label) bool {
+	for _, l := range labels {
+		_, tobeIgnored := b.labelsToIgnore[l.GetName()]
+		if tobeIgnored {
+			return true
+		}
+	}
+	return false
+}
+
+func labelsToString(labels []github.Label) string {
+	labelNames := make([]string, len(labels))
+	for idx, l := range labels {
+		labelNames[idx] = l.GetName()
+	}
+	return strings.Join(labelNames, ", ")
 }
