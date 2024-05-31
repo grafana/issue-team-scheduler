@@ -144,7 +144,7 @@ func newGithubBusynessClient(githubClient *github.Client, ignorableLabels []stri
 func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time, member string) int {
 	// check if one of the labels is contained by the labels to ignore
 
-	log.Printf("Listing issues of member %s since %s\n", member, since.String())
+	log.Printf("Calculating busyness of member %s based on their issues since %s\n", member, since.String())
 
 	issues, err := b.listByAssigneeFunc(ctx, since, member, 20)
 	if err != nil {
@@ -158,7 +158,7 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 		case "open":
 			// check for labels to ignore, e.g. `stale` and ignore issue in this case
 			if b.containsLabelsToIgnore(i.Labels) {
-				log.Printf("Ignoring open issue because it contains labels to ignore (%s): %s\n", labelsToString(i.Labels), i.GetTitle())
+				log.Printf("%s: Ignoring open issue because it contains labels to ignore (%s): %s\n", member, labelsToString(i.Labels), i.GetTitle())
 				continue
 			}
 
@@ -168,13 +168,13 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 		case "closed":
 			// if the issue got closed since our time to check
 			if since.Before(i.GetClosedAt()) {
-				log.Printf("Issue increases busyiness because it has been closed at %s which is after %s: %s\n", i.GetClosedAt().String(), since.String(), i.GetTitle())
+				log.Printf("%s: Issue increases busyiness because it has been closed at %s which is after %s: %s\n", member, i.GetClosedAt().String(), since.String(), i.GetTitle())
 				busyness++
 			} else {
-				log.Printf("Issue doesn't increase busyiness because it has been closed at %s which is before %s: %s\n", i.GetClosedAt().String(), since.String(), i.GetTitle())
+				log.Printf("%s: Issue doesn't increase busyiness because it has been closed at %s which is before %s: %s\n", member, i.GetClosedAt().String(), since.String(), i.GetTitle())
 			}
 		default:
-			log.Printf("Issue doesn't increase busyiness because it has an unknown state (%s): %s\n", i.GetState(), i.GetTitle())
+			log.Printf("%s: Issue doesn't increase busyiness because it has an unknown state (%s): %s\n", member, i.GetState(), i.GetTitle())
 		}
 	}
 
