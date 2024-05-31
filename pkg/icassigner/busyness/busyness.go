@@ -56,7 +56,7 @@ type busynessClient interface {
 
 // CalculateBusynessForTeam calculates busyness of all members and returns a BusynessReport for them
 func CalculateBusynessForTeam(ctx context.Context, now time.Time, githubClient *github.Client, ignorableLabels []string, members []string) (Report, error) {
-	log.Printf("Calculating issue busyness for team members: %s\n", strings.Join(members, ", "))
+	log.Printf("Calculating busyness for team members: %s\n", strings.Join(members, ", "))
 
 	bA, err := newGithubBusynessClient(githubClient, ignorableLabels)
 	if err != nil {
