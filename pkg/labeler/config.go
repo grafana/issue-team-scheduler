@@ -27,8 +27,8 @@ type Config struct {
 	// The label with the highest score is applied to the issue.
 	Labels map[string]Label `yaml:"labels,omitempty"`
 
-	// RequiredLabels is a list of labels that must be present on the issue for any other labels to be applied.
-	RequiredLabels []string `yaml:"required_labels,omitempty"`
+	// RequireLabel is a list of labels, for the regex-labeler to run at least one of the specified labels must be present on the issue.
+	RequireLabel []string `yaml:"requireLabel,omitempty"`
 }
 
 func (c *Config) Validate() error {

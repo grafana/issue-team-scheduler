@@ -42,6 +42,7 @@ func TestAssigningLabel(t *testing.T) {
 		{
 			name: "assign the mimir-query label",
 			cfg: Config{
+				RequireLabel: []string{"label1", "label3"},
 				Labels: map[string]Label{
 					"mimir-ingest": {
 						Matchers: []Matcher{
@@ -77,6 +78,32 @@ func TestAssigningLabel(t *testing.T) {
 				issueNumber: testIssueNumber,
 				labels:      []string{"label1", "label2", "mimir-query"},
 			}},
+		}, {
+			name: "don't assign label due to lack of required labels",
+			cfg: Config{
+				RequireLabel: []string{"label1", "label2"},
+				Labels: map[string]Label{
+					"mimir-query": {
+						Matchers: []Matcher{
+							{
+								regex:  regexp.MustCompile(`.*`),
+								Weight: 1,
+							},
+						},
+					},
+				},
+			},
+			issue: &github.Issue{
+				Number:        &testIssueNumber,
+				Title:         github.String("some title"),
+				Body:          github.String("some body abc something something query more text."),
+				RepositoryURL: &testRepositoreURL,
+				Labels: []github.Label{
+					{Name: github.String("label3")},
+					{Name: github.String("label4")},
+				},
+			},
+			expectedLabelAssignerCalls: nil,
 		},
 	}
 
