@@ -47,7 +47,7 @@ func (l *Labeler) Run(issue *github.Issue) error {
 		return nil
 	}
 
-	level.Info(l.logger).Log("msg", "issue has the required labels", "required_labels", strings.Join(l.cfg.RequiredLabels, ", "))
+	level.Info(l.logger).Log("msg", "issue has the required labels", "required_labels", strings.Join(l.cfg.RequireLabel, ", "))
 
 	if l.hasAssignableLabel(issue) {
 		return nil
@@ -155,7 +155,7 @@ func (l *Labeler) hasAssignableLabel(issue *github.Issue) bool {
 func (l *Labeler) hasRequiredLabels(issue *github.Issue) bool {
 	issueLabels := getIssueLabels(issue)
 
-	for _, requiredLabel := range l.cfg.RequiredLabels {
+	for _, requiredLabel := range l.cfg.RequireLabel {
 		if !slices.Contains[[]string, string](issueLabels, requiredLabel) {
 			level.Info(l.logger).Log("msg", "issue is missing required label", "label", requiredLabel)
 			return false
