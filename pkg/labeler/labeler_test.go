@@ -42,7 +42,7 @@ func TestAssigningLabel(t *testing.T) {
 		{
 			name: "assign the mimir-query label",
 			cfg: Config{
-				RequireLabel: []string{"label1"},
+				RequireLabel: []string{"label1", "label3"},
 				Labels: map[string]Label{
 					"mimir-ingest": {
 						Matchers: []Matcher{
