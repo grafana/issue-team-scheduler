@@ -44,10 +44,11 @@ func NewLabeler(cfg Config, gh *github.Client, logger log.Logger) *Labeler {
 
 func (l *Labeler) Run(issue *github.Issue) error {
 	if !l.hasRequiredLabels(issue) {
+		level.Info(l.logger).Log("msg", "issue has none of the required labels", "requireLabel", strings.Join(l.cfg.RequireLabel, ", "))
 		return nil
 	}
 
-	level.Info(l.logger).Log("msg", "issue has the required labels", "required_labels", strings.Join(l.cfg.RequireLabel, ", "))
+	level.Info(l.logger).Log("msg", "issue has at least one of the required labels", "requireLabel", strings.Join(l.cfg.RequireLabel, ", "))
 
 	if l.hasAssignableLabel(issue) {
 		return nil
@@ -161,10 +162,6 @@ func (l *Labeler) hasRequiredLabels(issue *github.Issue) bool {
 			match = true
 		}
 
-	}
-
-	if !match {
-		level.Info(l.logger).Log("msg", "issue has none of the required labels", "requireLabel", strings.Join(l.cfg.RequireLabel, ","))
 	}
 
 	return match
