@@ -72,12 +72,14 @@ func main() {
 
 	dryRun := githubaction.GetInputOrDefault("dry-run", "true") != "false"
 
+	labelsList := githubaction.GetInputOrDefault("labels", "")
+
 	action := &icassigner.Action{
 		Client: client,
 		Config: cfg,
 	}
 
-	err = action.Run(ctx, actionCtx, dryRun)
+	err = action.Run(ctx, actionCtx, labelsList, dryRun)
 	if err != nil {
 		log.Fatalf("Unable to run action: %v", err)
 	}
