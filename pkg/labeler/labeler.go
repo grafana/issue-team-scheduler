@@ -67,7 +67,7 @@ func (l *Labeler) Run(issue *github.Issue) error {
 		return err
 	}
 
-	err = githubaction.SetOutput("label", label)
+	err = githubaction.SetOutput("assignedLabel", label)
 	if err != nil {
 		return err
 	}
