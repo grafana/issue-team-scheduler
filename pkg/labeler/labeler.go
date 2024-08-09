@@ -67,7 +67,10 @@ func (l *Labeler) Run(issue *github.Issue) error {
 		return err
 	}
 
-	githubaction.SetOutput("label", label)
+	err = githubaction.SetOutput("label", label)
+	if err != nil {
+		return err
+	}
 
 	level.Info(l.logger).Log("msg", "completed successfully")
 
