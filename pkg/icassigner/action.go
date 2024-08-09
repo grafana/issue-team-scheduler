@@ -38,7 +38,7 @@ type Action struct {
 
 func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, labelsInput string, dryRun bool) error {
 	labels := convertLabels(event.Issue.Labels)
-	if labelsInput == "" {
+	if labelsInput != "" {
 		labels = strings.Split(labelsInput, ",")
 	}
 
