@@ -12,6 +12,10 @@ inputs:
     description: "With this option the decision only gets logged, but not change is made to the issue."
     required: false
     default: "true"
+  labels:
+    description: "With this option, the labels provided as a comma separated list will be the one used instead of the one in the issue."
+    required: false
+    default: ""
   gcal-service-acount-key:
     description: "Used to access google calendars in case of being configured for team members"
     required: false
