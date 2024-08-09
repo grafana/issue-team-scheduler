@@ -77,6 +77,15 @@ func main() {
 		Config: cfg,
 	}
 
+	onlyVerify := githubaction.GetInputOrDefault("verify", "false") == "true"
+	if onlyVerify {
+		log.Println("Running verification of calendar access only")
+
+		action.Verify(ctx)
+
+		return
+	}
+
 	err = action.Run(ctx, actionCtx, dryRun)
 	if err != nil {
 		log.Fatalf("Unable to run action: %v", err)
