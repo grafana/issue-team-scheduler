@@ -15,7 +15,7 @@ This action allows to assign labels based on regular expressions which are ranke
 
 ### Configuration
 
-An exemplary configuration looks like this: 
+An exemplary configuration looks like this:
 
 ```yaml
 required_labels:
@@ -73,7 +73,7 @@ Busyness of team members is calculated by the amount of issues someone is assign
 * Open issues: If they don't contain any of the labels which are configured to be ignored. This allows for example to ignore issues which got marked as `stale`
 * Closed issues: If they were closed within the lookback time (7 days).
 
-The higher this count, the more busy an individual team member is seen compared to other members.  
+The higher this count, the more busy an individual team member is seen compared to other members.
 
 ### Inputs
 
@@ -81,6 +81,7 @@ The higher this count, the more busy an individual team member is seen compared 
 | ------------------------- | ------- | -------- | ----------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `gh-token`                | String  | false    | `${{ github.token }}`         | The github token to be used for API access                                                               |
 | `cfg-path`                | String  | true     | `.auto-assign-issue-cfg.yaml` | Path to configuration file which contains definition of teams and requirements to match them on an issue |
+| `labels`                  | String  | false    | ``                            | The labels to use if you do not want to use the one provided by the GitHub issue                         |
 | `dry-run`                 | Boolean | false    | `false`                       | If set to true, assignment will only be logged.                                                          |
 | `gcal-service-acount-key` | String  | false    | ``                            | If set, this service account key will be used to check availability for google calendars.                |
 
@@ -98,7 +99,7 @@ Example config:
 ```yaml
 teams:
   team_a:
-    requireLabel: 
+    requireLabel:
     - "product_a"
     members:
     - name: user1
@@ -109,7 +110,7 @@ teams:
     - name: user1
       ical-url: https://.../cal.ics
   team_b_important:
-    requireLabel: 
+    requireLabel:
     - "product_b"
     - "product_b-important"
     members:
@@ -149,11 +150,11 @@ unavailabilityLimit: 6h
 
 #### Timezone awareness
 
-During the initial implementation it was carefully discussed if the action should take timzeones into consideration (aka only assign issues to someone during their working hours). After in-depth analysis of issues in other projects we concluded that the creation time of issues don't align to working hours of the majority of the teams we were working in (e.g. majority of issues created during american working hours while majority of the team wasn't located there). **This led us to make the action not timezone aware as of today.** As this obviously cause issues when you need issues to handle in a timely manner we are open to proposals for improvement, if they take into account that our main priority is to distribute issues as fairly as possible across a team. 
+During the initial implementation it was carefully discussed if the action should take timzeones into consideration (aka only assign issues to someone during their working hours). After in-depth analysis of issues in other projects we concluded that the creation time of issues don't align to working hours of the majority of the teams we were working in (e.g. majority of issues created during american working hours while majority of the team wasn't located there). **This led us to make the action not timezone aware as of today.** As this obviously cause issues when you need issues to handle in a timely manner we are open to proposals for improvement, if they take into account that our main priority is to distribute issues as fairly as possible across a team.
 
 #### Fairness
 
-Fairness in assigning issues to individuals of a team is subjective. As mean time to resolve depends on time of creation, issue complexity, productivity, knowledge, experience, availability and some degree of luck per team member it needs to be acknowledged that their is no objective fair distribution of issues among a group of people. Taking all these metrics into account is almost impossible and most likely would require additional state which we would need to store somewhere. We also discussed ideas like tracking the amount of completed issues per IC, but had to realise that issues which were hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now. 
+Fairness in assigning issues to individuals of a team is subjective. As mean time to resolve depends on time of creation, issue complexity, productivity, knowledge, experience, availability and some degree of luck per team member it needs to be acknowledged that their is no objective fair distribution of issues among a group of people. Taking all these metrics into account is almost impossible and most likely would require additional state which we would need to store somewhere. We also discussed ideas like tracking the amount of completed issues per IC, but had to realise that issues which were hard to resolve (and therefore take a long time) would suffer from this. We will revisit the current approach after gaining experience with it, but start lightweight now.
 
 ### Google calendar configuration
 
@@ -165,9 +166,9 @@ If you want to use the functionality to determine availability based on someones
 2. Choose a project this fits in / works well or create a new one as described [here](https://developers.google.com/workspace/guides/create-project)
 3. Activate Google Calendar API for your project [here](https://console.cloud.google.com/flows/enableapi?apiid=calendar-json.googleapis.com)
 4. Create a service account for your project as described [here](https://cloud.google.com/iam/docs/service-accounts-create)
-5. Open the service account from the [service account overview](https://console.cloud.google.com/iam-admin/serviceaccounts) 
-6. **Remember the service account email**. This is the email all configured members have to share their calendar with (free/busy information is enough) 
-7. Go to **Keys** > `ADD KEY` and create a new json based key which is used as `gcal-service-acount-key` during workflow runs. It's recommended to store as a secret in your repo and use the secret during workflow runs as input. 
+5. Open the service account from the [service account overview](https://console.cloud.google.com/iam-admin/serviceaccounts)
+6. **Remember the service account email**. This is the email all configured members have to share their calendar with (free/busy information is enough)
+7. Go to **Keys** > `ADD KEY` and create a new json based key which is used as `gcal-service-acount-key` during workflow runs. It's recommended to store as a secret in your repo and use the secret during workflow runs as input.
 
 #### Share calendars with the service account
 
