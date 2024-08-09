@@ -24,6 +24,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/google/go-github/github"
+	githubaction "github.com/grafana/escalation-scheduler/pkg/github-action"
 )
 
 type labelAssigner func(repoOwner, repoName string, issueNumber int, labels []string) error
@@ -65,6 +66,8 @@ func (l *Labeler) Run(issue *github.Issue) error {
 	if err != nil {
 		return err
 	}
+
+	githubaction.SetOutput("label", label)
 
 	level.Info(l.logger).Log("msg", "completed successfully")
 
