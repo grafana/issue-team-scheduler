@@ -82,7 +82,7 @@ The higher this count, the more busy an individual team member is seen compared 
 | `gh-token`                | String  | false    | `${{ github.token }}`         | The github token to be used for API access                                                               |
 | `cfg-path`                | String  | true     | `.auto-assign-issue-cfg.yaml` | Path to configuration file which contains definition of teams and requirements to match them on an issue |
 | `labels`                  | String  | false    | ``                            | The labels to use if you do not want to use the one provided by the GitHub issue                         |
-| `dry-run`                 | Boolean | false    | `false`                       | If set to true, assignment will only be logged.                                                          |
+| `dry-run`                 | Boolean | false    | `true`                        | If set to true, assignment will only be logged.                                                          |
 | `gcal-service-acount-key` | String  | false    | ``                            | If set, this service account key will be used to check availability for google calendars.                |
 
 ### Outputs
