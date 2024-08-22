@@ -155,7 +155,7 @@ func CheckAvailability(icalUrl string, name string, now time.Time, unavailabilit
 	if tzString := cal.Props.Get("X-WR-TIMEZONE"); tzString != nil {
 		loc, err = time.LoadLocation(tzString.Value)
 		if err != nil {
-			log.Printf("Unable to parse timezone %q, due %v", tzString.Value, err)
+			return true, fmt.Errorf("unable to parse timezone %q, due %w", tzString.Value, err)
 		}
 	}
 
