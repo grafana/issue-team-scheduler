@@ -27,7 +27,7 @@ import (
 // Verify the calendar access of everyone defined in the configuration.
 //
 // All members of whom calendars can't be accessed are set as "inaccessibleMembers" output
-func (a *Action) Verify(ctx context.Context) {
+func (a *Action) Verify(ctx context.Context) []string {
 	inaccessibleMembers := []string{}
 
 	for _, team := range a.Config.Teams {
@@ -45,4 +45,6 @@ func (a *Action) Verify(ctx context.Context) {
 	}
 
 	githubaction.SetOutput("inaccessibleMembers", strings.Join(inaccessibleMembers, ", "))
+
+	return inaccessibleMembers
 }
