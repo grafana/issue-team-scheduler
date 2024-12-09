@@ -60,13 +60,9 @@ func (a *Action) Run(ctx context.Context, event *github.IssuesEvent, labelsInput
 	}
 
 	// check if someone from the team is already assigned (skip in this case)
-	for _, m := range teamMembers {
-		for _, a := range event.Issue.Assignees {
-			if a.GetLogin() == m.Name {
-				log.Printf("Found assignee %q which is member of the matched team %q. Stopping\n", m.Name, teamName)
-				return nil
-			}
-		}
+	if assigned, teamMember := isTeamMemberAssigned(teamMembers, event.Issue.Assignees); assigned {
+		log.Printf("Found assignee %q which is member of the matched team %q. Stopping\n", teamMember, teamName)
+		return nil
 	}
 
 	// Log the known team member names.
@@ -254,4 +250,16 @@ func convertLabels(labels []github.Label) []string {
 	}
 
 	return labelStrings
+}
+
+func isTeamMemberAssigned(teamMembers []MemberConfig, assignees []*github.User) (bool, string) {
+	for _, m := range teamMembers {
+		for _, a := range assignees {
+			if strings.ToLower(a.GetLogin()) == strings.ToLower(m.Name) {
+				return true, m.Name
+			}
+		}
+	}
+
+	return false, ""
 }

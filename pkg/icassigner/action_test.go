@@ -19,6 +19,8 @@ package icassigner
 import (
 	"fmt"
 	"testing"
+
+	"github.com/google/go-github/github"
 )
 
 func TestFindTeam(t *testing.T) {
@@ -89,6 +91,72 @@ func TestFindTeam(t *testing.T) {
 				if !found {
 					t.Errorf("Expected team members to contain %v, but only got %v", e, result)
 				}
+			}
+		})
+	}
+}
+
+func TestIsTeamMemberAssigned(t *testing.T) {
+	teamMembers := []MemberConfig{
+		{Name: "Alice"},
+		{Name: "Bob"},
+		{Name: "Charlie"},
+	}
+
+	testCases := []struct {
+		name           string
+		teamMembers    []MemberConfig
+		assignees      []*github.User
+		expectedResult bool
+		expectedName   string
+	}{
+		{
+			name:           "No assignees",
+			teamMembers:    teamMembers,
+			assignees:      []*github.User{},
+			expectedResult: false,
+			expectedName:   "",
+		},
+		{
+			name:           "Assignee matches team member",
+			teamMembers:    teamMembers,
+			assignees:      []*github.User{{Login: github.String("Alice")}},
+			expectedResult: true,
+			expectedName:   "Alice",
+		},
+		{
+			name:           "Case-insensitive match",
+			teamMembers:    teamMembers,
+			assignees:      []*github.User{{Login: github.String("bob")}},
+			expectedResult: true,
+			expectedName:   "Bob",
+		},
+		{
+			name:           "No matching assignees",
+			teamMembers:    teamMembers,
+			assignees:      []*github.User{{Login: github.String("Unknown")}},
+			expectedResult: false,
+			expectedName:   "",
+		},
+		{
+			name:           "Multiple assignees, one matches",
+			teamMembers:    teamMembers,
+			assignees:      []*github.User{{Login: github.String("Unknown")}, {Login: github.String("Charlie")}},
+			expectedResult: true,
+			expectedName:   "Charlie",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, name := isTeamMemberAssigned(testCase.teamMembers, testCase.assignees)
+
+			if result != testCase.expectedResult {
+				t.Errorf("Expected result to be %v, but got %v", testCase.expectedResult, result)
+			}
+
+			if name != testCase.expectedName {
+				t.Errorf("Expected name to be %q, but got %q", testCase.expectedName, name)
 			}
 		})
 	}
