@@ -176,7 +176,8 @@ This action works by using a google cloud service account to access the calendar
 
 Next members can share their availability with this service account via:
 1. Open [Google Calendar](https://calendar.google.com/calendar/u/0/r)
-2. Open Settings by opening the hamburger menu next to your personal calendar and clicking `Settings and sharing`
-3. In the `Share with specific people or groups` section you click `+ Add people and groups`
-4. Enter the email address of the service account you created and select `See only free/busy (hide details)` under Permissions.
-5. Click `Send` and you are done
+2. On the left, find the "My calendars" section. To expand it, click the Down arrow.
+3. Hover over your personal calendar and click on the three dots to open a dropdown. Click on `Settings and sharing` to open the settings.
+4. In the `Share with specific people or groups` section you click `+ Add people and groups`
+5. Enter the email address of the service account you created and select `See only free/busy (hide details)` under Permissions.
+6. Click `Send` and you are done
