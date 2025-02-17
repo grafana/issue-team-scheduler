@@ -133,7 +133,7 @@ unavailabilityLimit: 6h
 
 | Parameter      | Type            | Required | Default | Description                                                                                                                                                                                                     |
 | -------------- | --------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `requireLabel` | List of Strings | false    | `[]`    | List of labels which are required to match a given team. Only if all labels match, the issue may be assigned to someone of this team. If multiple teams match all members of all matching teams are considered. |
+| `requireLabel` | List of Strings | false    | `[]`    | List of labels in which one is required to match a given team. If multiple labels are specified, only 1 has to match to make a team eligible. If multiple teams match, all members of all matching teams are considered. |
 | `members`      | List of Members | true     | `nil`   | Definition of the individual members of a team.                                                                                                                                                                 |
 
 
