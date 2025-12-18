@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3.3.0
     - name: label issues
-      uses: grafana/issue-team-scheduler/regex-labeler@v0.4
+      uses: grafana/issue-team-scheduler/regex-labeler@7a943bb323b3d94353eb0ee0e508b426ae01a944 # v0.16
       with:
         cfg-path: .github/label-issues-cfg.yml
         dry-run: false
