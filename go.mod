@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.19.0
 )
 
