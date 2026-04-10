@@ -20,7 +20,31 @@ import (
 	"bytes"
 	"testing"
 	"time"
+
+	"github.com/grafana/escalation-scheduler/pkg/icassigner/calendar"
 )
+
+func TestParseConfig_DefaultUnavailabilityLimit(t *testing.T) {
+	// When unavailabilityLimit is not set in the config, it should default to
+	// calendar.DefaultUnavailabilityLimit (6h).
+	rawConfig := `teams:
+  myteam:
+    requireLabel:
+    - some-label
+    members:
+    - name: alice
+      ical-url: https://example.com/alice.ics`
+
+	cfg, err := ParseConfig(bytes.NewBuffer([]byte(rawConfig)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.UnavailabilityLimit != calendar.DefaultUnavailabilityLimit {
+		t.Errorf("expected default unavailability limit of %v, got %v",
+			calendar.DefaultUnavailabilityLimit, cfg.UnavailabilityLimit)
+	}
+}
 
 func TestMimirConfigCanBeParsed(t *testing.T) {
 	// We usually don't want to test libraries we are using (yaml decoding in this case).

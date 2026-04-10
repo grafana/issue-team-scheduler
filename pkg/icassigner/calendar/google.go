@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/api/calendar/v3"
+	googlecalendar "google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 )
 
@@ -29,15 +29,15 @@ type GoogleConfigJSON string
 
 func CheckGoogleAvailability(cfg GoogleConfigJSON, calendarName string, name string, now time.Time, unavailabilityLimit time.Duration) (bool, error) {
 	opt := option.WithCredentialsJSON([]byte(cfg))
-	calService, err := calendar.NewService(context.Background(), opt)
+	calService, err := googlecalendar.NewService(context.Background(), opt)
 	if err != nil {
 		return true, fmt.Errorf("unable to get api access for %q, due %w", name, err)
 	}
 
-	response, err := calService.Freebusy.Query(&calendar.FreeBusyRequest{
+	response, err := calService.Freebusy.Query(&googlecalendar.FreeBusyRequest{
 		TimeMin: time.Now().Add(-24 * time.Hour).Format(time.RFC3339),
 		TimeMax: time.Now().Add(4 * 24 * time.Hour).Format(time.RFC3339),
-		Items: []*calendar.FreeBusyRequestItem{
+		Items: []*googlecalendar.FreeBusyRequestItem{
 			{Id: calendarName},
 		},
 		TimeZone: "utc",
@@ -54,24 +54,31 @@ func CheckGoogleAvailability(cfg GoogleConfigJSON, calendarName string, name str
 		return true, fmt.Errorf("unable to access calendar from %v, please ensure they shared their calendar with the service account. Internal error %q", name, calendar.Errors[0].Reason)
 	}
 
-	availabilityChecker := newIcalAvailabilityChecker(now, unavailabilityLimit, time.UTC)
+	return checkGoogleBusySlots(calendar.Busy, now, unavailabilityLimit), nil
+}
 
-	// check all events
-	for _, e := range calendar.Busy {
+// checkGoogleBusySlots reports whether any of the freebusy slots blocks availability.
+// Slots with unparseable RFC3339 times are skipped (same fail-open behaviour as the
+// iCal path). Google Calendar always returns times in UTC, so UTC is used as the
+// location for the look-ahead window calculation.
+func checkGoogleBusySlots(slots []*googlecalendar.TimePeriod, now time.Time, unavailabilityLimit time.Duration) bool {
+	checker := newIcalAvailabilityChecker(now, unavailabilityLimit, time.UTC)
+
+	for _, e := range slots {
 		start, err := time.Parse(time.RFC3339, e.Start)
-		if err != nil { // in case of an error -> skip event
+		if err != nil {
 			continue
 		}
 
 		end, err := time.Parse(time.RFC3339, e.End)
-		if err != nil { // in case of an error -> skip event
+		if err != nil {
 			continue
 		}
 
-		if availabilityChecker.isEventBlockingAvailability(start, end) {
-			return false, nil
+		if checker.isEventBlockingAvailability(start, end) {
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }

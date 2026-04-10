@@ -24,6 +24,8 @@ import (
 	"time"
 
 	_ "time/tzdata"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsEventBlockingAvailability(t *testing.T) {
@@ -199,6 +201,288 @@ func TestIsEventBlockingAvailability(t *testing.T) {
 		})
 	}
 
+}
+
+func newIcalTestServer(t *testing.T, ical string) string {
+	t.Helper()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, ical)
+	}))
+	t.Cleanup(ts.Close)
+	return ts.URL
+}
+
+func TestCheckAvailability_Available(t *testing.T) {
+	// An event that ended in the past should not block availability.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20200101T090000Z
+DTEND:20200101T170000Z
+DTSTAMP:20200101T090000Z
+UID:past-event@test
+STATUS:CONFIRMED
+SUMMARY:Past Event
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 11, 12, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !available {
+		t.Error("expected available (event is in the past), but got unavailable")
+	}
+}
+
+func TestCheckAvailability_TransparentEvent(t *testing.T) {
+	// A TRANSPARENT event (marked as "free") must not block availability even if it is
+	// long and starts within the lookahead window.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20240111T090000Z
+DTEND:20240111T230000Z
+DTSTAMP:20240111T000000Z
+UID:transparent-event@test
+STATUS:CONFIRMED
+SUMMARY:Out of Office (Free)
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR`)
+
+	// now is 1 hour before the event starts — without TRANSPARENT it would block.
+	now := time.Date(2024, time.January, 11, 8, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !available {
+		t.Error("expected available (event is transparent/free), but got unavailable")
+	}
+}
+
+func TestCheckAvailability_ShortEventDoesNotBlock(t *testing.T) {
+	// An event shorter than the unavailability limit must not block availability.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20240111T090000Z
+DTEND:20240111T093000Z
+DTSTAMP:20240111T000000Z
+UID:short-event@test
+STATUS:CONFIRMED
+SUMMARY:Quick sync (30 min)
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 11, 8, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !available {
+		t.Error("expected available (event is shorter than unavailability limit), but got unavailable")
+	}
+}
+
+func TestCheckAvailability_RecurringEventBlocks(t *testing.T) {
+	// Weekly 8-hour event: the base occurrence is in the past (last Thursday), but the
+	// next weekly occurrence falls within the 12-hour lookahead, so the person is unavailable.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20240104T090000Z
+DTEND:20240104T170000Z
+DTSTAMP:20240104T090000Z
+UID:weekly-block@test
+RRULE:FREQ=WEEKLY
+STATUS:CONFIRMED
+SUMMARY:Weekly Block
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	// Thursday 2024-01-11 at 03:00 UTC: next weekly occurrence (09:00–17:00) is within 12h.
+	now := time.Date(2024, time.January, 11, 3, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if available {
+		t.Error("expected unavailable (weekly recurring event is within lookahead), but got available")
+	}
+}
+
+func TestCheckAvailability_RecurringEventOutsideSearchWindow(t *testing.T) {
+	// Same weekly event, but now is Wednesday: the next Thursday occurrence is outside
+	// the recurrence search window (±2×duration around now), so no blocking occurrence
+	// is found and the person is available.
+	//
+	// Recurrence search window with duration=8h: [now−16h, now+16h]
+	// now = Wednesday 2024-01-10 09:00 UTC → window = [Jan 9 17:00, Jan 11 01:00]
+	// Next occurrence Jan 11 09:00 UTC > Jan 11 01:00 → outside window → not found.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20240104T090000Z
+DTEND:20240104T170000Z
+DTSTAMP:20240104T090000Z
+UID:weekly-block@test
+RRULE:FREQ=WEEKLY
+STATUS:CONFIRMED
+SUMMARY:Weekly Block
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 10, 9, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !available {
+		t.Error("expected available (next occurrence is outside the recurrence search window), but got unavailable")
+	}
+}
+
+func TestCheckAvailability_MultipleEvents_BlockingEventDetectedAmongNonBlocking(t *testing.T) {
+	// A calendar with multiple events: one short (non-blocking) and one long upcoming
+	// (blocking). The presence of the non-blocking event must not prevent the blocking
+	// event from being detected.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+DTSTART:20240111T083000Z
+DTEND:20240111T090000Z
+DTSTAMP:20240111T000000Z
+UID:short-meeting@test
+STATUS:CONFIRMED
+SUMMARY:Quick sync (30 min, non-blocking)
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20240111T090000Z
+DTEND:20240111T170000Z
+DTSTAMP:20240111T000000Z
+UID:long-block@test
+STATUS:CONFIRMED
+SUMMARY:Full-day block (8h, blocking)
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 11, 8, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	require.NoError(t, err)
+	require.False(t, available, "expected unavailable: 8h blocking event present alongside a short non-blocking one")
+}
+
+func TestCheckAvailability_NoTimezone_PastEventIsAvailable(t *testing.T) {
+	// When X-WR-TIMEZONE is absent and the only event is in the past, the code returns
+	// before ever calling time.Time.In(nil), so no panic occurs and the person is available.
+	// NOTE for TypeScript port: the Go code panics if X-WR-TIMEZONE is absent AND there
+	// is a long upcoming event (see TestCheckAvailability_NoTimezone_FutureBlockingEventPanics).
+	// The TS implementation should fall back to UTC in that situation rather than crashing.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+DTSTART:20200101T090000Z
+DTEND:20200101T170000Z
+DTSTAMP:20200101T090000Z
+UID:past-no-tz@test
+STATUS:CONFIRMED
+SUMMARY:Past event, no calendar timezone
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 11, 12, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	require.NoError(t, err)
+	require.True(t, available, "expected available (event in the past; nil location never reached)")
+}
+
+func TestCheckAvailability_NoTimezone_FutureBlockingEventPanics(t *testing.T) {
+	// When X-WR-TIMEZONE is absent and there is a long upcoming event, the code reaches
+	// time.Time.In(nil) which panics with "time: location is nil". This documents a known
+	// limitation of the Go implementation.
+	//
+	// NOTE for TypeScript port: do NOT replicate this panic. Fall back to UTC when no
+	// timezone is present in the feed, so the function degrades gracefully.
+	url := newIcalTestServer(t, `BEGIN:VCALENDAR
+PRODID:-//Test//Test//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+DTSTART:20240111T090000Z
+DTEND:20240111T170000Z
+DTSTAMP:20240111T000000Z
+UID:future-no-tz@test
+STATUS:CONFIRMED
+SUMMARY:Long upcoming event, no calendar timezone
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`)
+
+	now := time.Date(2024, time.January, 11, 8, 0, 0, 0, time.UTC)
+	require.Panics(t, func() {
+		CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit) //nolint:errcheck
+	}, "expected panic: time.Time.In(nil) when X-WR-TIMEZONE is absent and event would block")
+}
+
+func TestCheckAvailability_NonTwoHundredResponse(t *testing.T) {
+	// A non-200 HTTP response must return available=true (fail-open) and a non-nil error.
+	// Failing open ensures an HTTP hiccup doesn't block an issue from being assigned.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(ts.Close)
+
+	now := time.Date(2024, time.January, 11, 12, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(ts.URL, "tester", now, DefaultUnavailabilityLimit)
+	require.Error(t, err, "expected an error for non-200 response")
+	require.True(t, available, "expected fail-open (available=true) on HTTP error")
+}
+
+func TestCheckAvailability_MalformedIcal(t *testing.T) {
+	// A response body that is not valid ical must return available=true (fail-open) and
+	// a non-nil error. Same fail-open contract as the HTTP error case above.
+	url := newIcalTestServer(t, `this is not valid ical content`)
+
+	now := time.Date(2024, time.January, 11, 12, 0, 0, 0, time.UTC)
+	available, err := CheckAvailability(url, "tester", now, DefaultUnavailabilityLimit)
+	require.Error(t, err, "expected an error for malformed ical")
+	require.True(t, available, "expected fail-open (available=true) on parse error")
 }
 
 func TestCheckAvailability(t *testing.T) {

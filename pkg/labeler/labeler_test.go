@@ -17,6 +17,7 @@
 package labeler
 
 import (
+	"os"
 	"regexp"
 	"testing"
 
@@ -24,6 +25,16 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/require"
 )
+
+// setGithubOutput creates a temp file for GITHUB_OUTPUT and registers cleanup.
+func setGithubOutput(t *testing.T) {
+	t.Helper()
+	f, err := os.CreateTemp("", "github-output-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.Remove(f.Name()) })
+	f.Close()
+	t.Setenv("GITHUB_OUTPUT", f.Name())
+}
 
 func TestAssigningLabel(t *testing.T) {
 	testIssueNumber := 333
@@ -109,6 +120,7 @@ func TestAssigningLabel(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			setGithubOutput(t)
 			mockLabelAssigner, calls := getMockLabelAssigner()
 			l := &Labeler{
 				cfg:           tc.cfg,
@@ -120,6 +132,97 @@ func TestAssigningLabel(t *testing.T) {
 			require.Equal(t, tc.expectedLabelAssignerCalls, *calls)
 		})
 	}
+}
+
+func TestAssigningLabel_AlreadyHasAssignableLabel(t *testing.T) {
+	testIssueNumber := 333
+	testRepoOwner := "testOwner"
+	testRepoName := "testRepo"
+	testRepositoryURL := "/repos/" + testRepoOwner + "/" + testRepoName
+
+	cfg := Config{
+		RequireLabel: []string{"required"},
+		Labels: map[string]Label{
+			"target-label": {
+				Matchers: []Matcher{
+					{regex: regexp.MustCompile(`.*`), Weight: 1},
+				},
+			},
+		},
+	}
+	issue := &github.Issue{
+		Number:        &testIssueNumber,
+		Title:         github.String("some title"),
+		Body:          github.String("some body"),
+		RepositoryURL: &testRepositoryURL,
+		Labels: []github.Label{
+			{Name: github.String("required")},
+			{Name: github.String("target-label")}, // already has the assignable label
+		},
+	}
+
+	mockLabelAssigner, calls := getMockLabelAssigner()
+	l := &Labeler{cfg: cfg, labelAssigner: mockLabelAssigner, logger: log.NewNopLogger()}
+	require.NoError(t, l.Run(issue))
+	require.Nil(t, *calls, "expected no label assigner calls when issue already has an assignable label")
+}
+
+func TestAssigningLabel_HigherWeightedScoreWins(t *testing.T) {
+	setGithubOutput(t)
+
+	testIssueNumber := 333
+	testRepoOwner := "testOwner"
+	testRepoName := "testRepo"
+	testRepositoryURL := "/repos/" + testRepoOwner + "/" + testRepoName
+
+	cfg := Config{
+		RequireLabel: []string{"required"},
+		Labels: map[string]Label{
+			"low-priority": {
+				Matchers: []Matcher{
+					{regex: regexp.MustCompile(`.*query.*`), Weight: 1},
+				},
+			},
+			"high-priority": {
+				Matchers: []Matcher{
+					{regex: regexp.MustCompile(`.*query.*`), Weight: 2},
+				},
+			},
+		},
+	}
+	issue := &github.Issue{
+		Number:        &testIssueNumber,
+		Title:         github.String("a query title"),
+		Body:          github.String("some body"),
+		RepositoryURL: &testRepositoryURL,
+		Labels:        []github.Label{{Name: github.String("required")}},
+	}
+
+	mockLabelAssigner, calls := getMockLabelAssigner()
+	l := &Labeler{cfg: cfg, labelAssigner: mockLabelAssigner, logger: log.NewNopLogger()}
+	require.NoError(t, l.Run(issue))
+
+	require.Len(t, *calls, 1)
+	require.Contains(t, (*calls)[0].labels, "high-priority")
+	require.NotContains(t, (*calls)[0].labels, "low-priority")
+}
+
+func TestFindLabel_NoMatch(t *testing.T) {
+	l := &Labeler{
+		cfg: Config{
+			Labels: map[string]Label{
+				"some-label": {
+					Matchers: []Matcher{
+						{regex: regexp.MustCompile(`very specific text that will not match`), Weight: 1},
+					},
+				},
+			},
+		},
+		logger: log.NewNopLogger(),
+	}
+
+	_, err := l.findLabel("unrelated title", "unrelated body")
+	require.Error(t, err, "expected error when no regex matches")
 }
 
 type labelAssignerCall struct {

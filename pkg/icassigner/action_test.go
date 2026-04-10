@@ -18,6 +18,7 @@ package icassigner
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/go-github/github"
@@ -90,6 +91,83 @@ func TestFindTeam(t *testing.T) {
 
 				if !found {
 					t.Errorf("Expected team members to contain %v, but only got %v", e, result)
+				}
+			}
+		})
+	}
+}
+
+func TestFindTeam_MultipleTeamsMatch(t *testing.T) {
+	// When two teams both match the issue labels, their members should be merged
+	// with duplicates deduplicated (alice appears in both teams).
+	cfg := Config{
+		Teams: map[string]TeamConfig{
+			"team-a": {
+				RequireLabel: []string{"label-a"},
+				Members:      []MemberConfig{{Name: "alice"}, {Name: "bob"}},
+			},
+			"team-b": {
+				RequireLabel: []string{"label-b"},
+				Members:      []MemberConfig{{Name: "charlie"}, {Name: "alice"}},
+			},
+		},
+	}
+
+	members, teamName := findTeam(cfg, []string{"label-a", "label-b"})
+
+	// alice is deduped, so we expect alice + bob + charlie = 3 members.
+	if len(members) != 3 {
+		t.Errorf("expected 3 merged members (alice deduped), got %d: %v", len(members), members)
+	}
+
+	for _, expected := range []string{"alice", "bob", "charlie"} {
+		found := false
+		for _, m := range members {
+			if m.Name == expected {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected merged team to contain %q, but got %v", expected, members)
+		}
+	}
+
+	if !strings.Contains(teamName, "team-a") || !strings.Contains(teamName, "team-b") {
+		t.Errorf("expected team name to reference both matched teams, got %q", teamName)
+	}
+}
+
+func TestConvertLabels(t *testing.T) {
+	testCases := []struct {
+		name     string
+		labels   []github.Label
+		expected []string
+	}{
+		{
+			name: "converts label names",
+			labels: []github.Label{
+				{Name: github.String("bug")},
+				{Name: github.String("enhancement")},
+			},
+			expected: []string{"bug", "enhancement"},
+		},
+		{
+			name:     "empty input returns empty slice",
+			labels:   []github.Label{},
+			expected: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := convertLabels(tc.labels)
+			if len(result) != len(tc.expected) {
+				t.Fatalf("expected %d labels, got %d: %v", len(tc.expected), len(result), result)
+			}
+			for i, expected := range tc.expected {
+				if result[i] != expected {
+					t.Errorf("expected label[%d] = %q, got %q", i, expected, result[i])
 				}
 			}
 		})
