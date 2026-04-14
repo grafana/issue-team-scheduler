@@ -234,7 +234,6 @@ type mockIssueClient struct {
 	input struct {
 		assignee string
 		since    time.Time
-		amount   int
 	}
 
 	result struct {
@@ -243,10 +242,9 @@ type mockIssueClient struct {
 	}
 }
 
-func (m *mockIssueClient) ListByAssignee(ctx context.Context, since time.Time, assignee string, amount int) ([]*github.Issue, error) {
+func (m *mockIssueClient) ListByAssignee(ctx context.Context, since time.Time, assignee string) ([]*github.Issue, error) {
 	m.input.since = since
 	m.input.assignee = assignee
-	m.input.amount = amount
 
 	return m.result.issues, m.result.err
 }

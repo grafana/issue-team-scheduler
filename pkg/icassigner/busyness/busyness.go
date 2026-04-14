@@ -104,7 +104,7 @@ func calculateBusynessForTeam(ctx context.Context, now time.Time, bA busynessCli
 type githubBusynessClient struct {
 	labelsToIgnore map[string]struct{}
 
-	listByAssigneeFunc func(ctx context.Context, since time.Time, assignee string, amount int) ([]*github.Issue, error)
+	listByAssigneeFunc func(ctx context.Context, since time.Time, assignee string) ([]*github.Issue, error)
 }
 
 // newGithubBusynessClient creates a new githubBusynessClient based on config.
@@ -118,17 +118,29 @@ func newGithubBusynessClient(githubClient *github.Client, ignorableLabels []stri
 	if err != nil {
 		return nil, fmt.Errorf("unable to get github repository information due %w", err)
 	}
-	listByAssigneeFunc := func(ctx context.Context, since time.Time, assignee string, amount int) ([]*github.Issue, error) {
-		issues, _, err := githubClient.Issues.ListByRepo(ctx, owner, repo, &github.IssueListByRepoOptions{
+	listByAssigneeFunc := func(ctx context.Context, since time.Time, assignee string) ([]*github.Issue, error) {
+		var all []*github.Issue
+		opts := &github.IssueListByRepoOptions{
 			Since:    since,    // check only issues which were updated since
 			Assignee: assignee, // filter by assignee
+			State:    "all",    // include both open and closed issues
+			Sort:     "updated",
 			ListOptions: github.ListOptions{
-				PerPage: amount, // we only want as many as specified in amount
+				PerPage: 100,
 			},
-			Sort: "updated", // sort descending by last updated
-		})
-
-		return issues, err
+		}
+		for {
+			issues, resp, err := githubClient.Issues.ListByRepo(ctx, owner, repo, opts)
+			if err != nil {
+				return nil, err
+			}
+			all = append(all, issues...)
+			if resp.NextPage == 0 {
+				break
+			}
+			opts.Page = resp.NextPage
+		}
+		return all, nil
 	}
 
 	return &githubBusynessClient{
@@ -146,7 +158,7 @@ func (b *githubBusynessClient) getBusyness(ctx context.Context, since time.Time,
 
 	log.Printf("Calculating busyness of member %s based on their issues since %s\n", member, since.String())
 
-	issues, err := b.listByAssigneeFunc(ctx, since, member, 20)
+	issues, err := b.listByAssigneeFunc(ctx, since, member)
 	if err != nil {
 		return 0
 	}
