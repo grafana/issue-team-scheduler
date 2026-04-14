@@ -42,7 +42,7 @@ require (
 )
 
 require (
-	github.com/emersion/go-ical v0.0.0-20240127095438-fc1c9d8fb2b6
+	github.com/emersion/go-ical v0.0.0-20250609112844-439c63cef608
 	github.com/google/go-querystring v1.1.0 // indirect
 	google.golang.org/api v0.176.1
 	gopkg.in/yaml.v2 v2.4.0
