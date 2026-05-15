@@ -1,12 +1,12 @@
 module github.com/grafana/escalation-scheduler
 
-go 1.22.2
+go 1.23.0
 
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.19.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 require (
