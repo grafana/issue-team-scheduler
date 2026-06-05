@@ -16,7 +16,7 @@ jobs:
       group: mimir-${{ github.event.issue.id }}-${{ github.event.action }}
       cancel-in-progress: true
     steps:
-    - uses: actions/checkout@v3.3.0
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - name: label issues
       uses: grafana/issue-team-scheduler/regex-labeler@v0.4
       with:
