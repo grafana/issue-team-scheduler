@@ -7,6 +7,7 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.19.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -38,12 +39,10 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/emersion/go-ical v0.0.0-20240127095438-fc1c9d8fb2b6
 	github.com/google/go-querystring v1.1.0 // indirect
 	google.golang.org/api v0.176.1
-	gopkg.in/yaml.v2 v2.4.0
 )

@@ -25,7 +25,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/grafana/escalation-scheduler/pkg/icassigner/calendar"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
