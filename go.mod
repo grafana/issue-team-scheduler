@@ -1,6 +1,6 @@
 module github.com/grafana/escalation-scheduler
 
-go 1.22.2
+go 1.25.0
 
 require (
 	github.com/go-kit/log v0.2.1
@@ -33,7 +33,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
 	google.golang.org/grpc v1.63.2 // indirect
